@@ -1,44 +1,36 @@
-# AI Agent Public Assets Repo
+# edAgent-Public
 
-这个仓库用于维护可公开发布、可复用的 `AI Agent` 系列资产。
+这里收集的是可以长期复用的内容。
 
-这里适合放：
+目前主要包括：
 
-- 共享图示与可编辑源文件
-- Prompt 资产
-- Function Calling / MCP schema
-- 评测样本、Judge 配置、公开报告
-- 可运行示例
-- 公开参考资料索引
-- 面向公开资产的管理规范
+- 图示与可编辑源文件
+- Prompt 模板
+- 工具 schema
+- 评测样本与结果
+- 小型示例代码
+- 参考资料笔记
 
-这里不放：
-
-- 大纲
-- 私有写作规范
-- 未发布或不公开的文章正文
-- 文章专属配图
-- 只服务于私有写作过程的内部材料
-
-## 目录结构
+## 目录
 
 ```text
 .
 ├─ README.md
-├─ AGENTS.md
+├─ CONTRIBUTING.md
 ├─ assets/
 ├─ prompts/
 ├─ tool-schemas/
 ├─ evals/
 ├─ examples/
-├─ references/
-└─ editorial/
-   ├─ asset-policy.md
-   └─ repo-management.md
+└─ references/
 ```
 
-## 与私有仓库的关系
+## 说明
 
-- 私有仓库可以引用本仓库内容
-- 本仓库不依赖私有仓库
-- 如果某个说明必须依赖私有大纲或私有草稿，那它不应该放在本仓库
+- 可编辑图源放在 `assets/diagrams/src/`
+- 导出图片放在 `assets/diagrams/exports/`
+- 可复用的 Prompt 放在 `prompts/`
+- 工具定义放在 `tool-schemas/`
+- 评测数据放在 `evals/`
+
+命名和整理方式见 [CONTRIBUTING.md](CONTRIBUTING.md)。

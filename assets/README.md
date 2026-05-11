@@ -1,16 +1,8 @@
-# Assets Directory
+# Assets
 
-这里存放整套系列的共享资产。
+这里放共享的图示和辅助材料。
 
-优先原则：
-
-- 先存可编辑源码，再存导出文件
-- 先存脱敏版本，再存可公开版本
-- 能共享的资产尽量不要分散在单篇文章目录里
-
-子目录用途：
-
-- `diagrams/`：结构图、流程图、状态图
-- `screenshots/`：产品截图、trace 截图、界面示意
-- `datasets/`：示例数据、测试数据、脱敏数据
-- `traces/`：调用链样例、评测 trace、错误复盘材料
+- `diagrams/`：图源和导出图
+- `screenshots/`：截图
+- `datasets/`：示例数据
+- `traces/`：trace 样例和调试快照

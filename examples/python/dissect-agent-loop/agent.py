@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-import traceback
 import urllib.request
 from pathlib import Path
 
@@ -28,7 +27,8 @@ CSV 路径由外层控制器提供，不要编造或修改文件名。
 {"thought": "...", "tool": "run_python", "args": {"code": "..."}}
 {"thought": "...", "final": "..."}
 
-如果观察结果里出现报错，请根据错误信息修正下一次工具调用。
+如果观察结果里出现报错，请根据 error_type、error_message、available_columns、
+failed_code 和 hint 修正下一次工具调用。
 """
 
 
@@ -161,14 +161,21 @@ def run_python(path, code):
         return {
             "ok": True,
             "result": str(env.get("result", ""))[:2000],
-            "created_files": created,
+            "artifacts": created,
             "matplotlib_font": font_name,
         }
-    except Exception:
+    except Exception as exc:
         plt.close("all")
         return {
             "ok": False,
-            "error": traceback.format_exc(limit=3),
+            "error_type": type(exc).__name__,
+            "error_message": str(exc),
+            "failed_code": code[:2000],
+            "available_columns": list(df.columns),
+            "hint": (
+                "代码执行失败，请根据 error_type、error_message、"
+                "available_columns 和 failed_code 修正下一步动作。"
+            ),
         }
 
 
@@ -183,7 +190,10 @@ def call_tool(action, csv_path):
 
     return {
         "ok": False,
-        "error": f"未知工具：{tool}",
+        "error_type": "UnknownTool",
+        "error_message": f"未知工具：{tool}",
+        "available_tools": ["inspect_csv", "run_python"],
+        "hint": "请只调用 available_tools 中列出的工具，或在任务完成时输出 final。",
     }
 
 
@@ -208,7 +218,13 @@ def run_agent(csv_path, question, max_steps=6):
         try:
             action = parse_action(reply)
         except Exception as exc:
-            observation = {"ok": False, "error": str(exc)}
+            observation = {
+                "ok": False,
+                "error_type": type(exc).__name__,
+                "error_message": str(exc),
+                "raw_reply": reply[:1000],
+                "hint": "模型必须只返回约定 JSON，请重新输出合法动作。",
+            }
         else:
             if "final" in action:
                 return action["final"]

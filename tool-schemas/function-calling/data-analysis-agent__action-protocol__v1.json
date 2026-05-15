@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Data Analysis Agent Action Protocol v1",
+  "description": "A minimal controller-facing action protocol for a data analysis Agent loop. The model must return either a tool_call action or a final_answer action.",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/tool_call_action"
+    },
+    {
+      "$ref": "#/$defs/final_answer_action"
+    }
+  ],
+  "$defs": {
+    "tool_call_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "thought",
+        "tool",
+        "args"
+      ],
+      "properties": {
+        "thought": {
+          "type": "string",
+          "description": "A brief reason for this next action. It is used for debugging and trace review, not for direct user display.",
+          "minLength": 1
+        },
+        "tool": {
+          "type": "string",
+          "enum": [
+            "inspect_csv",
+            "run_python"
+          ],
+          "description": "The tool requested by the model. The controller owns actual execution."
+        },
+        "args": {
+          "type": "object",
+          "description": "Arguments for the selected tool. The expected schema depends on the tool value."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tool": {
+                "const": "inspect_csv"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "$ref": "#/$defs/inspect_csv_args"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tool": {
+                "const": "run_python"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "$ref": "#/$defs/run_python_args"
+              }
+            }
+          }
+        }
+      ],
+      "examples": [
+        {
+          "thought": "我需要先查看字段和样本，避免猜错列名。",
+          "tool": "inspect_csv",
+          "args": {}
+        },
+        {
+          "thought": "已经知道字段名，可以按品类汇总销售额并生成图表。",
+          "tool": "run_python",
+          "args": {
+            "code": "summary = df.groupby('category')['sales_amount'].sum().sort_values(ascending=False)\nresult = summary.to_string()\nsummary.plot(kind='bar')\nplt.tight_layout()\nplt.savefig(out_dir / 'sales_by_category.png')"
+          }
+        }
+      ]
+    },
+    "final_answer_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "thought",
+        "final"
+      ],
+      "properties": {
+        "thought": {
+          "type": "string",
+          "description": "A brief reason why the Agent can stop now.",
+          "minLength": 1
+        },
+        "final": {
+          "type": "string",
+          "description": "The final user-facing answer. It should include conclusion, evidence, artifact paths when available, and limitations.",
+          "minLength": 1
+        }
+      },
+      "examples": [
+        {
+          "thought": "已经得到汇总结果和图表路径，可以结束。",
+          "final": "销售额最高的品类是家电。图表已生成：agent_outputs/sales_by_category.png。需要注意的是，sales_amount 有 3 条缺失记录，本次分析默认忽略缺失值。"
+        }
+      ]
+    },
+    "inspect_csv_args": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "run_python_args": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Python analysis code to run in the controller-provided environment. The code should use known columns only.",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
+

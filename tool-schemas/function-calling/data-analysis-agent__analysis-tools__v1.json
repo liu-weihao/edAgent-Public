@@ -1,0 +1,250 @@
+{
+  "title": "Data Analysis Agent Analysis Tools v1",
+  "description": "Function-calling style tool definitions and observation contracts for the article series data analysis Agent.",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "inspect_csv",
+        "description": "Inspect the current CSV dataset and return a compact structured observation. The controller owns the actual file path; the model must not provide or override the path.",
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {}
+        }
+      },
+      "observation_schema": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/inspect_csv_success"
+          },
+          {
+            "$ref": "#/$defs/tool_error"
+          }
+        ]
+      },
+      "success_example": {
+        "ok": true,
+        "shape": [
+          1200,
+          6
+        ],
+        "columns": [
+          "date",
+          "category",
+          "region",
+          "sales_amount",
+          "orders",
+          "profit"
+        ],
+        "sample_rows": [
+          {
+            "date": "2026-01-01",
+            "category": "家电",
+            "region": "华东",
+            "sales_amount": 1280.0,
+            "orders": 8,
+            "profit": 210.5
+          }
+        ],
+        "missing": {
+          "date": 0,
+          "category": 0,
+          "region": 0,
+          "sales_amount": 3,
+          "orders": 0,
+          "profit": 8
+        },
+        "numeric_summary": {
+          "sales_amount": {
+            "mean": 320.55,
+            "min": 12.0,
+            "max": 4280.0
+          }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "run_python",
+        "description": "Run Python analysis code in a controlled environment where df, pd, plt, and out_dir are provided by the controller. Use it for calculations, validation, data cleaning, and chart generation.",
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Python code to execute. The code should use only observed column names and should write chart artifacts under out_dir when needed."
+            }
+          }
+        }
+      },
+      "observation_schema": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/run_python_success"
+          },
+          {
+            "$ref": "#/$defs/run_python_error"
+          }
+        ]
+      },
+      "success_example": {
+        "ok": true,
+        "result": "category\n家电    52400\n服饰    18700\n美妆    15300\n食品    11600",
+        "artifacts": [
+          "agent_outputs/sales_by_category.png"
+        ]
+      },
+      "error_example": {
+        "ok": false,
+        "error_type": "KeyError",
+        "error_message": "'product_category'",
+        "failed_code": "summary = df.groupby('product_category')['revenue'].sum()",
+        "available_columns": [
+          "date",
+          "category",
+          "region",
+          "sales_amount",
+          "orders",
+          "profit"
+        ],
+        "hint": "代码执行失败，请根据 error_type、error_message、available_columns 和 failed_code 修正下一步动作。"
+      }
+    }
+  ],
+  "$defs": {
+    "inspect_csv_success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ok",
+        "shape",
+        "columns",
+        "sample_rows",
+        "missing",
+        "numeric_summary"
+      ],
+      "properties": {
+        "ok": {
+          "const": true
+        },
+        "shape": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ],
+          "items": false
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sample_rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "missing": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "numeric_summary": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "run_python_success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ok",
+        "result",
+        "artifacts"
+      ],
+      "properties": {
+        "ok": {
+          "const": true
+        },
+        "result": {
+          "type": "string"
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tool_error": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "ok",
+        "error_type",
+        "error_message"
+      ],
+      "properties": {
+        "ok": {
+          "const": false
+        },
+        "error_type": {
+          "type": "string"
+        },
+        "error_message": {
+          "type": "string"
+        },
+        "hint": {
+          "type": "string"
+        }
+      }
+    },
+    "run_python_error": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/tool_error"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "failed_code": {
+              "type": "string"
+            },
+            "available_columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
